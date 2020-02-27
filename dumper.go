@@ -100,7 +100,7 @@ func (d Dumper) queryFirst(args Args, shard int) ScrollResult {
 		search.WithIndex(args.Index),
 		search.WithDocumentType(args.Type),
 		search.WithSort("_doc"),
-		search.WithSize(1000),
+		search.WithSize(args.BatchSize),
 		search.WithPreference(preference),
 		search.WithScroll(time.Minute),
 	)

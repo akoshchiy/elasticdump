@@ -2,28 +2,23 @@ package main
 
 import (
 	"bufio"
+	"io"
 	"log"
-	"os"
 )
 
 type DumpWriter struct {
-	f    *os.File
+	w    io.WriteCloser
 	docs chan string
 }
 
-func NewWriter(path string, bufSize int) (*DumpWriter, error) {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDumpWriter(w io.WriteCloser, bufSize int) (*DumpWriter, error) {
 	docs := make(chan string, bufSize)
 
 	go func() {
-		writer := bufio.NewWriter(f)
+		writer := bufio.NewWriter(w)
 		defer func() {
-			writer.Flush()
-			f.Close()
+			_ = writer.Flush()
+			_ = w.Close()
 		}()
 		for doc := range docs {
 			_, err := writer.WriteString(doc)
@@ -32,11 +27,10 @@ func NewWriter(path string, bufSize int) (*DumpWriter, error) {
 				log.Println("write file err: " + err.Error())
 			}
 		}
-
 	}()
 
 	return &DumpWriter{
-		f:    f,
+		w:    w,
 		docs: docs,
 	}, nil
 }
